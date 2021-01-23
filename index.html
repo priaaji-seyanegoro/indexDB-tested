@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Indexes DB TEST</title>
+  </head>
+  <body>
+    <h2>Open Your Console Log For See Result</h2>
+    <button onclick="read()">Read</button>
+    <button onclick="readAll()">Read All</button>
+    <button onclick="add()">Add</button>
+    <button onclick="remove()">Delete</button>
+  </body>
+
+  <script type="text/javascript">
+    //prefixes of implementation that we want to test
+    window.indexedDB =
+      window.indexedDB ||
+      window.mozIndexedDB ||
+      window.webkitIndexedDB ||
+      window.msIndexedDB;
+
+    //prefixes of window.IDB objects
+    window.IDBTransaction =
+      window.IDBTransaction ||
+      window.webkitIDBTransaction ||
+      window.msIDBTransaction;
+    window.IDBKeyRange =
+      window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
+
+    if (!window.indexedDB) {
+      window.alert(
+        "Your browser doesn't support a stable version of IndexedDB."
+      );
+    }
+
+    const employeeData = [
+      {
+        id: "00-01",
+        name: "gopal",
+        age: 35,
+        email: "gopal@tutorialspoint.com",
+      },
+      {
+        id: "00-02",
+        name: "prasad",
+        age: 32,
+        email: "prasad@tutorialspoint.com",
+      },
+    ];
+
+    var db;
+    const req = window.indexedDB.open("test-db", 1);
+
+    req.onerror = function (event) {
+      console.log("error: ");
+    };
+
+    req.onsuccess = function (event) {
+      db = req.result;
+      console.log("success: " + db);
+    };
+
+    req.onupgradeneeded = function (event) {
+      var db = event.target.result;
+      var objectStore = db.createObjectStore("employee", { keyPath: "id" });
+
+      for (var i in employeeData) {
+        objectStore.add(employeeData[i]);
+      }
+    };
+
+    function read() {
+      var transaction = db.transaction(["employee"]);
+      var objectStore = transaction.objectStore("employee");
+      var request = objectStore.get("00-11");
+
+      request.onerror = function (event) {
+        console.log("Something Error");
+      };
+
+      request.onsuccess = function (event) {
+        // Do something with the request.result!
+        if (request.result) {
+          console.log(request.result);
+        } else {
+          console.log("Data Not Found");
+        }
+      };
+    }
+
+    function readAll() {
+      var objectStore = db.transaction("employee").objectStore("employee");
+
+      objectStore.openCursor().onsuccess = function (event) {
+        var cursor = event.target.result;
+
+        if (cursor) {
+          console.log(cursor.value);
+          cursor.continue();
+        }
+      };
+    }
+
+    function add(obj) {
+      var request = db
+        .transaction(["employee"], "readwrite")
+        .objectStore("employee")
+        .add({
+          id: "00-05",
+          name: "Test5",
+          age: 19,
+          email: "Test5@planet.org",
+        });
+
+      request.onsuccess = function (event) {
+        alert("success save to your database.");
+      };
+
+      request.onerror = function (event) {
+        alert("fail save to your database.");
+      };
+    }
+
+    function remove() {
+      var request = db
+        .transaction(["employee"], "readwrite")
+        .objectStore("employee")
+        .delete("00-05");
+
+      request.onsuccess = function (event) {
+        event.target.result ?
+            console.log("Success removed from your database.")
+            : console.log("Data Delete Not Found");
+      };
+    }
+
+    // function updated(){
+    //     var request = db
+    //         .transaction(["employee"], "readwrite")
+    //         .objectStore("employee")
+
+    // }
+  </script>
+</html>
